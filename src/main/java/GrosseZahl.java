@@ -10,18 +10,25 @@ public class GrosseZahl {
         }
     }
 
-    private int[] buffer;
+    public final static GrosseZahl ZERO = new GrosseZahl(0);
+    public final static GrosseZahl ONE = new GrosseZahl(1);
 
-    private GrosseZahl(int[] digits) {
+    private byte[] buffer;
+
+    private GrosseZahl(byte[] digits) {
         this.buffer = digits;
     }
     
     // "12345"
     public GrosseZahl(String bignum) {
-        this.buffer = new int[bignum.length()];
+        this.buffer = new byte[bignum.length()];
         for (int i = 0; i < bignum.length(); i++) {
-            buffer[i] = Character.getNumericValue(bignum.charAt(i));
+            buffer[i] = (byte) Character.getNumericValue(bignum.charAt(i));
         }
+    }
+
+    public GrosseZahl(int num) {
+        this((long) num);
     }
 
     // 12345
@@ -29,17 +36,17 @@ public class GrosseZahl {
     // 12345 % 10 == 5
     // 12345 / 10 == 1234
     // 1234 % 10 == 4
-    public GrosseZahl(int num) {
+    public GrosseZahl(long num) {
         if (num == 0) {
-            this.buffer = new int[1];
+            this.buffer = new byte[1];
             this.buffer[0] = 0;
             return;
         }
 
         int length = (int) Math.log10((double) num) + 1;
-        this.buffer = new int[length];
+        this.buffer = new byte[length];
         for (int i = length - 1; i >= 0; i--) {
-            this.buffer[i] = num % 10;
+            this.buffer[i] = (byte) (num % 10);
             num /= 10;
         }
     }
@@ -47,7 +54,7 @@ public class GrosseZahl {
     // 123456789
     // +  123456
     // ---------
-    public GrosseZahl add(GrosseZahl rhs) {
+    public GrosseZahl add(final GrosseZahl rhs) {
         if (this.buffer.length < rhs.buffer.length) {
             return rhs.add(this);
         }
@@ -55,27 +62,27 @@ public class GrosseZahl {
         int diff = this.buffer.length - rhs.buffer.length;
         int length = this.buffer.length;
 
-        int overflows = 0;
+        byte overflows = 0;
 
         for (int i = length - 1; i >= 0; i--) {
-            int a = this.buffer[i];
-            int b = (i < diff)? 0 : rhs.buffer[i - diff];
-            int c = overflows;
+            byte a = this.buffer[i];
+            byte b = (i < diff)? 0 : rhs.buffer[i - diff];
+            byte c = overflows;
 
-            overflows = (a + b + c >= 10)? 1:0;
+            overflows = (a + b + c >= 10)? (byte) 1 : (byte) 0;
         }
 
         length = length + overflows;
-        int[] tmp = new int[length];
-        int carry = 0;
+        byte[] tmp = new byte[length];
+        byte carry = 0;
 
         for (int i = this.buffer.length - 1; i >= 0; i--) {
-            int a = this.buffer[i];
-            int b = (i < diff)? 0 : rhs.buffer[i - diff];
-            int sum = a + b + carry;
-            tmp[i + overflows] = sum % 10;
+            byte a = this.buffer[i];
+            byte b = (i < diff)? 0 : rhs.buffer[i - diff];
+            byte sum = (byte) (a + b + carry);
+            tmp[i + overflows] = (byte) (sum % 10);
 
-            carry = (sum >= 10)? 1:0;
+            carry = (sum >= 10)? (byte) 1 : (byte) 0;
         }
 
         if (overflows != 0) {
@@ -88,23 +95,23 @@ public class GrosseZahl {
     // 123456789
     // -  123456
     // ---------
-    public GrosseZahl sub(GrosseZahl rhs) {
+    public GrosseZahl sub(final GrosseZahl rhs) {
         if (this.less(rhs)) {
             return null;
         }
 
         int diff = this.buffer.length - rhs.buffer.length;
         int length = this.buffer.length;
-        int[] tmp = new int[length];
-        int borrow = 0;
+        byte[] tmp = new byte[length];
+        byte borrow = 0;
 
         for (int i = this.buffer.length - 1; i >= 0; i--) {
-            int a = this.buffer[i];
-            int b = (i < diff)? 0 : rhs.buffer[i - diff];
-            int delta = a - b - borrow;
-            borrow = (delta < 0)? 1 : 0;
+            byte a = this.buffer[i];
+            byte b = (i < diff)? 0 : rhs.buffer[i - diff];
+            byte delta = (byte) (a - b - borrow);
+            borrow = (delta < 0)? (byte) 1 : (byte) 0;
 
-            delta = (delta < 0)? delta + 10 : delta;
+            delta = (delta < 0)? (byte) (delta + 10) : delta;
             tmp[i] = delta;
         }
 
@@ -117,7 +124,7 @@ public class GrosseZahl {
         }
 
         length = length == 0? 1 : length;
-        int[] buffer = new int[length];
+        byte[] buffer = new byte[length];
 
         for (int i = 1; i <= length; i++) {
             buffer[buffer.length - i] = tmp[tmp.length - i];
@@ -126,42 +133,42 @@ public class GrosseZahl {
         return new GrosseZahl(buffer);
     }
 
-    public GrosseZahl mult(GrosseZahl rhs) {
+    public GrosseZahl mult(final GrosseZahl rhs) {
         if (rhs.greater(this)) {
             return rhs.mult(this);
         }
 
-        GrosseZahl prod = new GrosseZahl(0);
+        GrosseZahl prod = ZERO;
 
-        for (GrosseZahl i = new GrosseZahl(0); i.less(rhs); i = i.add(new GrosseZahl(1))) {
+        for (GrosseZahl i = ZERO; i.less(rhs); i = i.add(ONE)) {
             prod = prod.add(this);
         }
 
         return prod;
     }
 
-    public DivMod divmod(GrosseZahl rhs) {
-        if (rhs.zero()) {
+    public DivMod divmod(final GrosseZahl rhs) {
+        if (rhs.isZero()) {
             return null;
         }
 
         if (rhs.greater(this)) {
-            return new DivMod(new GrosseZahl(0), this);
+            return new DivMod(ZERO, this);
         }
 
-        GrosseZahl div = new GrosseZahl(0);
+        GrosseZahl div = ZERO;
         GrosseZahl mod = this;
 
         while (!mod.less(rhs)) {
-            div = div.add(new GrosseZahl(1));
+            div = div.add(ONE);
             mod = mod.sub(rhs);
         }
 
         return new DivMod(div, mod);
     }
 
-    public GrosseZahl ggT(GrosseZahl rhs) {
-        if (rhs.zero()) {
+    public GrosseZahl ggT(final GrosseZahl rhs) {
+        if (rhs.isZero()) {
             return this;
         }
 
@@ -170,7 +177,7 @@ public class GrosseZahl {
 
     // 123456
     // 123556 
-    public boolean less(GrosseZahl rhs) {
+    public boolean less(final GrosseZahl rhs) {
         if (this.buffer.length != rhs.buffer.length) {
             return this.buffer.length < rhs.buffer.length;
         }
@@ -184,7 +191,7 @@ public class GrosseZahl {
         return false;
     }
 
-    public boolean greater(GrosseZahl rhs) {
+    public boolean greater(final GrosseZahl rhs) {
         if (this.buffer.length != rhs.buffer.length) {
             return this.buffer.length > rhs.buffer.length;
         }
@@ -198,7 +205,7 @@ public class GrosseZahl {
         return false;
     }
 
-    public boolean equal(GrosseZahl rhs) {
+    public boolean equal(final GrosseZahl rhs) {
         if (this.buffer.length != rhs.buffer.length) {
             return false;
         }
@@ -212,7 +219,7 @@ public class GrosseZahl {
         return true;
     }
 
-    public boolean zero() {
+    public boolean isZero() {
         return this.buffer.length == 1 && this.buffer[0] == 0;
     }
 
