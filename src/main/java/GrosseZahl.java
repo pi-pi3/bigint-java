@@ -1,5 +1,15 @@
 
 public class GrosseZahl {
+    public static class DivMod {
+        public GrosseZahl div;
+        public GrosseZahl mod;
+
+        public DivMod(GrosseZahl div, GrosseZahl mod) {
+            this.div = div;
+            this.mod = mod;
+        }
+    }
+
     private int[] buffer;
 
     private GrosseZahl(int[] digits) {
@@ -75,6 +85,47 @@ public class GrosseZahl {
         return new GrosseZahl(tmp);
     }
 
+    // 123456789
+    // -  123456
+    // ---------
+    public GrosseZahl sub(GrosseZahl rhs) {
+        if (this.less(rhs)) {
+            return null;
+        }
+
+        int diff = this.buffer.length - rhs.buffer.length;
+        int length = this.buffer.length;
+        int[] tmp = new int[length];
+        int borrow = 0;
+
+        for (int i = this.buffer.length - 1; i >= 0; i--) {
+            int a = this.buffer[i];
+            int b = (i < diff)? 0 : rhs.buffer[i - diff];
+            int delta = a - b - borrow;
+            borrow = (delta < 0)? 1 : 0;
+
+            delta = (delta < 0)? delta + 10 : delta;
+            tmp[i] = delta;
+        }
+
+        for (int i = 0; i < tmp.length; i++) {
+            if (tmp[i] != 0) {
+                break;
+            }
+
+            length--;
+        }
+
+        length = length == 0? 1 : length;
+        int[] buffer = new int[length];
+
+        for (int i = 1; i <= length; i++) {
+            buffer[buffer.length - i] = tmp[tmp.length - i];
+        }
+
+        return new GrosseZahl(buffer);
+    }
+
     public GrosseZahl mult(GrosseZahl rhs) {
         if (rhs.greater(this)) {
             return rhs.mult(this);
@@ -89,9 +140,32 @@ public class GrosseZahl {
         return prod;
     }
 
-    public GrosseZahl ggt(GrosseZahl rhs) {
-        // TODO
-        return null;
+    public DivMod divmod(GrosseZahl rhs) {
+        if (rhs.zero()) {
+            return null;
+        }
+
+        if (rhs.greater(this)) {
+            return new DivMod(new GrosseZahl(0), this);
+        }
+
+        GrosseZahl div = new GrosseZahl(0);
+        GrosseZahl mod = this;
+
+        while (!mod.less(rhs)) {
+            div = div.add(new GrosseZahl(1));
+            mod = mod.sub(rhs);
+        }
+
+        return new DivMod(div, mod);
+    }
+
+    public GrosseZahl ggT(GrosseZahl rhs) {
+        if (rhs.zero()) {
+            return this;
+        }
+
+        return rhs.ggT(this.divmod(rhs).mod);
     }
 
     // 123456

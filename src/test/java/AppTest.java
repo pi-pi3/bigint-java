@@ -113,6 +113,21 @@ public class AppTest {
 			z=z.add(i99);
 		assertEquals("12375",z.toString());
 	}
+
+	@Test
+	public void testSub() {
+		assertEquals("0",i0.sub(i0).toString());
+		assertEquals("1",i1.sub(i0).toString());
+		assertEquals("0",i1.sub(s1).toString());
+		
+		assertEquals("5",i60.sub(s55).toString());
+		
+		assertEquals("5",s60.sub(i55).toString());
+		
+		assertEquals("12246",i12345.sub(i99).toString());
+		
+		assertEquals("1999999999999999999",s12345678901234567890.sub(s10345678901234567891).toString());
+	}
 	
 	@Test
 	public void testMult() {
@@ -135,6 +150,36 @@ public class AppTest {
 		for (int i=1; i<=9; i++)
 			z=z.mult(i99);
 		assertEquals("913517247483640899",z.toString());
+	}
+	
+	@Test
+	public void testDiv() {
+		assertEquals(null,i0.divmod(i0));
+		assertEquals("1",i1.divmod(i1).div.toString());
+		
+		assertEquals("0",i55.divmod(s60).div.toString());
+		assertEquals("1",i60.divmod(s55).div.toString());
+		
+		assertEquals("0",s55.divmod(i60).div.toString());
+		assertEquals("1",s60.divmod(i55).div.toString());
+		
+		assertEquals("124",s12345.divmod(s99).div.toString());
+		assertEquals("124",i12345.divmod(i99).div.toString());
+	}
+	
+	@Test
+	public void testMod() {
+		assertEquals(null,i0.divmod(i0));
+		assertEquals("0",i1.divmod(i1).mod.toString());
+		
+		assertEquals("55",i55.divmod(s60).mod.toString());
+		assertEquals("5",i60.divmod(s55).mod.toString());
+		
+		assertEquals("55",s55.divmod(i60).mod.toString());
+		assertEquals("5",s60.divmod(i55).mod.toString());
+		
+		assertEquals("69",s12345.divmod(s99).mod.toString());
+		assertEquals("69",i12345.divmod(i99).mod.toString());
 	}
 	
 	@Test
