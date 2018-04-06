@@ -167,6 +167,22 @@ public class GrosseZahl {
         return new DivMod(div, mod);
     }
 
+    public GrosseZahl div(final GrosseZahl rhs) {
+        if (rhs.isZero()) {
+            return null;
+        }
+
+        return this.divmod(rhs).div;
+    }
+
+    public GrosseZahl mod(final GrosseZahl rhs) {
+        if (rhs.isZero()) {
+            return null;
+        }
+
+        return this.divmod(rhs).mod;
+    }
+
     public GrosseZahl ggT(final GrosseZahl rhs) {
         if (rhs.isZero()) {
             return this;
